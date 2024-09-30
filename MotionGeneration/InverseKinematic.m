@@ -71,66 +71,74 @@ showdetails(robot)    % 显示rigidBodyTree
 
 qright0 = zeros(1,6); 
 qleft0 = zeros(1,6); 
-updateJoints(robot, qright0, qleft0)
+% ShowRobotJoints(robot, qright0, qleft0)
 
 
-n = [0;  0; -1]; % x
-s = [-1; 0; 0];  % y
-a = [0;  1; 0];  % z
-R = [n s a];   
-
-for sIdx = 1:length(footinfos)
-    % Extract X Y Z position states (indices 1, 3, and 5)
-    stateL = footinfos{sIdx}.footleft([1 3 5],:); 
-    stateR = footinfos{sIdx}.footright([1 3 5],:); 
-    
-    % Initialize matrices
-    numIdx = size(stateL,2); 
-    jointsLeft = zeros(6,numIdx); 
-    jointsRight = zeros(6,numIdx); 
-    transMatLeft = zeros(4,4,numIdx); 
-    transMatRight = zeros(4,4,numIdx); 
-    
-    % Skip some intermediate steps when visualizing 
-    for idx = 1:numIdx
-        % Get Left joints
-        p = stateL(:,idx); 
-        transmat =  [R     p; 
-                    [0 0 0 1]];
-        isLeft = true; 
-        qLeft = invKinBody2Foot(transmat, isLeft); % Call IK function
-        jointsLeft(:,idx) = qLeft; 
-        transMatLeft(:,:,idx) = transmat; 
-        
-        % Get Right joints
-        p = stateR(:,idx); 
-        transmat =  [R     p; 
-                    [0 0 0 1]];
-        isLeft = false; 
-        qRight = invKinBody2Foot(transmat, isLeft);
-        jointsRight(:,idx) = qRight; 
-        transMatRight(:,:,idx) = transmat; 
-        
-        % Animate
-        if animateOn
-            if rem(idx,speedupfactor) == 0
-                
-                updateJoints(robot, qRight, qLeft);
-            end 
-        end
-    end
-    % save joints info 
-    footinfos{sIdx}.jointsleft = jointsLeft; 
-    footinfos{sIdx}.jointsright = jointsRight; 
-    footinfos{sIdx}.transmatleft = transMatLeft; 
-    footinfos{sIdx}.transmatright = transMatRight; 
-end
+% n = [0;  0; -1]; % x
+% s = [-1; 0; 0];  % y
+% a = [0;  1; 0];  % z
+% R = [n s a];   
+% for sIdx = 1:length(footinfos)
+%     % Extract X Y Z position states (indices 1, 3, and 5)
+%     stateL = footinfos{sIdx}.footleft([1 3 5],:); 
+%     stateR = footinfos{sIdx}.footright([1 3 5],:); 
+% 
+%     % Initialize matrices
+%     numIdx = size(stateL,2); 
+%     jointsLeft = zeros(6,numIdx); 
+%     jointsRight = zeros(6,numIdx); 
+%     transMatLeft = zeros(4,4,numIdx); 
+%     transMatRight = zeros(4,4,numIdx); 
+% 
+%     % Skip some intermediate steps when visualizing 
+%     for idx = 1:numIdx
+%         % Get Left joints
+%         p = stateL(:,idx); 
+%         transmat =  [R     p; 
+%                     [0 0 0 1]];
+%         isLeft = true; 
+%         qLeft = invKinBody2Foot(transmat, isLeft); % Call IK function
+%         jointsLeft(:,idx) = qLeft; 
+%         transMatLeft(:,:,idx) = transmat; 
+% 
+%         % Get Right joints
+%         p = stateR(:,idx); 
+%         transmat =  [R     p; 
+%                     [0 0 0 1]];
+%         isLeft = false; 
+%         qRight = invKinBody2Foot(transmat, isLeft);
+%         jointsRight(:,idx) = qRight; 
+%         transMatRight(:,:,idx) = transmat; 
+% 
+%         % Animate
+%         if animateOn
+%             if rem(idx,speedupfactor) == 0
+% 
+%                 ShowRobotJoints(robot, qRight, qLeft);
+%             end 
+%         end
+%     end
+%     % save joints info 
+%     footinfos{sIdx}.jointsleft = jointsLeft; 
+%     footinfos{sIdx}.jointsright = jointsRight; 
+%     footinfos{sIdx}.transmatleft = transMatLeft; 
+%     footinfos{sIdx}.transmatright = transMatRight; 
+% end
 
 % last update of Animation in case Animation is off 
-updateJoints(robot, qRight, qLeft);
+% ShowRobotJoints(robot, qRight, qLeft);
 
+qright0 = zeros(1,6); 
+qleft0 = zeros(1,6); 
+config = GetConfiguration(robot, qright0, qleft0);
+pose_link1 = getTransform(robot, config, 'rightleg7', 'base');
+disp(pose_link1);
+pose_link1 = getTransform(robot, config, 'leftleg7', 'base');
 
+% 显示变换矩阵
+disp(pose_link1);
 
+error('test')
 
 
 
@@ -167,29 +175,32 @@ updateJoints(robot, qRight, qLeft);
 
 
 
-
-
-
-
-
-
-function updateJoints(robot, anglesright, anglesleft)
+function output = GetConfiguration(robot, AngleRight, AngleLeft)
     % get joint home position
     desconfig = robot.homeConfiguration;
 
     desconfig(1).JointPosition = pi; % angle offset 
-    for idx = 1:length(anglesright)
-        desconfig(idx+1).JointPosition = anglesright(idx);
+    for idx = 1:length(AngleRight)
+        desconfig(idx+1).JointPosition = AngleRight(idx);
     end 
     desconfig(2).JointPosition = desconfig(2).JointPosition - pi;
     desconfig(3).JointPosition = desconfig(3).JointPosition + pi/2; 
 
     desconfig(8).JointPosition = pi;
-    for idx = 1:length(anglesleft)
-        desconfig(idx+8).JointPosition = anglesleft(idx);
+    for idx = 1:length(AngleLeft)
+        desconfig(idx+8).JointPosition = AngleLeft(idx);
     end 
     desconfig(9).JointPosition = desconfig(9).JointPosition - pi; 
     desconfig(10).JointPosition = desconfig(10).JointPosition + pi/2; 
+    output = desconfig;
+end
+
+
+
+
+
+function ShowRobotJoints(robot, anglesright, anglesleft)
+    desconfig = GetConfiguration(robot, anglesright, anglesleft);
 
     % update graphics 
     % PreservePlot用来指定是否保留上一帧的绘图, false不保存
