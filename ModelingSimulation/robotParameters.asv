@@ -18,9 +18,9 @@ plane_y = 50;
 contact_point_radius = 0.0001; %m
 
 %% Robot mechanical Parameters (m)
-density = 1000;
+density = 1000; % kg/(m^3)
 
-leg_width = 0.12;
+leg_width = 0.5;
 lower_leg_length = 0.38; 
 upper_leg_length = 0.40;
 
