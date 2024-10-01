@@ -2,7 +2,7 @@
 % Copyright 2017-2019 The MathWorks, Inc.
 
 %% Actuator type
-actuatorType = 1; % 1:motion controlled, 2:torque controlled, 3:motor controlled
+actuatorType = 2; % 1:motion controlled, 2:torque controlled, 3:motor controlled
 
 %% Contact and friction parameters
 contact_stiffness = 400/0.001;          % Approximated at weight (N) / desired displacement (m)
