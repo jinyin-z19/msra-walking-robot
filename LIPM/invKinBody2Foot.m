@@ -25,8 +25,8 @@ if isLeft
     L1 = -L1;
 end
 L2 = 0;
-L3 = 0.4;   % Upper leg length
-L4 = 0.38;  % Lower leg length
+L3 = 0.25;   % Upper leg length
+L4 = 0.25;  % Lower leg length
 L5 = 0;     % Ankle to foot contact offset
 
 %% 1) Perform some offsets

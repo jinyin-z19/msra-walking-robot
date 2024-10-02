@@ -15,14 +15,14 @@ height_plane = 0.025;
 plane_z = height_plane; 
 plane_x = 3;
 plane_y = 50;
-contact_point_radius = 0.0001; %m
+contact_point_radius = 0.0001;  % m
 
 %% Robot mechanical Parameters (m)
 density = 1000;
 
 leg_width = 0.05;
-lower_leg_length = 0.15; 
-upper_leg_length = 0.15;
+lower_leg_length = 0.25; 
+upper_leg_length = 0.25;
 
 foot_x = 0.17;
 foot_y = 0.17;
@@ -31,12 +31,18 @@ foot_z = 0.02;
 torso_width = 0.24; 
 torso_length = 0.20; 
 torso_height = 0.30; 
+torso_mass = 10;  % kg
 
 torso_offset_height = -0.15; 
 torso_offset_length = 0; 
 
 world_damping = 0;      % Translational damping for 6-DOF joint [N/m]
 world_rot_damping = 0;  % Rotational damping for 6-DOF joint [N*m/(rad/s)]
+
+joint_motor_radius = 38 / 1000;  % mm
+joint_motor_length = 63 / 1000;  % mm
+joint_motor_mass = 0.6;
+
 
 %% Initial conditions
 % Height of the 6-DOF joint between the ground and robot torso

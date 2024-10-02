@@ -1,3 +1,4 @@
+%% parameters
 animateOn = true;     % rander the image and show in figure
 speedupfactor = 30;   % animation speed up 
 
@@ -13,6 +14,7 @@ L3 = 0.4;
 L4 = 0.38;
 L5 = 0;
 
+%% create rigidBodyTree
 robot = rigidBodyTree;
 
 dhparams = [L1      0        -L2     0;     % Base -> hip yaw
@@ -69,6 +71,7 @@ end
 showdetails(robot)    % 显示rigidBodyTree
 
 
+%% show robot joints
 qright0 = zeros(1,6); 
 qleft0 = zeros(1,6); 
 % ShowRobotJoints(robot, qright0, qleft0)
@@ -174,7 +177,7 @@ error('test')
 
 
 
-
+%% functions
 function output = GetConfiguration(robot, AngleRight, AngleLeft)
     % get joint home position
     desconfig = robot.homeConfiguration;
