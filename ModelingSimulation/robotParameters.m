@@ -20,9 +20,9 @@ contact_point_radius = 0.0001; %m
 %% Robot mechanical Parameters (m)
 density = 1000;
 
-leg_width = 0.12;
-lower_leg_length = 0.38; 
-upper_leg_length = 0.40;
+leg_width = 0.05;
+lower_leg_length = 0.15; 
+upper_leg_length = 0.15;
 
 foot_x = 0.17;
 foot_y = 0.17;
@@ -30,9 +30,9 @@ foot_z = 0.02;
 
 torso_width = 0.24; 
 torso_length = 0.20; 
-torso_height = 0.35; 
+torso_height = 0.30; 
 
-torso_offset_height = 0; 
+torso_offset_height = -0.15; 
 torso_offset_length = 0; 
 
 world_damping = 0;      % Translational damping for 6-DOF joint [N/m]
