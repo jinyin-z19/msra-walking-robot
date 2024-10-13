@@ -27,26 +27,30 @@ print(siminR_values[:, :, 0])
 
 # ----------------------------------------------------------------------
 new_data = np.load('data.npz')
+print(list(new_data.keys()))
 data['siminR'].time = new_data['time']
 data['siminL'].time = new_data['time']
 print(new_data['pos'].shape)
 poses = new_data['pos'].reshape(12, 1000)
-
-fixed_matrix = np.array([
-    [0., -1., 0., 0.],
-    [0., 0., 1., 0.],
-    [-1., 0., 0., 0.],
-    [0., 0., 0., 1.]
-])
+T_l_mat = new_data['lposT']
+T_r_mat = new_data['rposT']
+# fixed_matrix = np.array([
+#     [0., -1., 0., 0.],
+#     [0., 0., 1., 0.],
+#     [-1., 0., 0., 0.],
+#     [0., 0., 0., 1.]
+# ])
 # 重复矩阵以创建4x4x1000的数组
-repeated_matrix = np.tile(fixed_matrix[:, :, np.newaxis], (1, 1, 1000))
-repeated_matrix[:3, 3, :] = poses[:3, :]
+# repeated_matrix = np.tile(fixed_matrix[:, :, np.newaxis], (1, 1, 1000))
+# repeated_matrix[:3, 3, :] = poses[:3, :]
+repeated_matrix = T_l_mat
 data['siminL'].signals.values = repeated_matrix
 data['siminL'].signals.dimensions = [4, 4]
 
 
-repeated_matrix = np.tile(fixed_matrix[:, :, np.newaxis], (1, 1, 1000))
-repeated_matrix[:3, 3, :] = poses[6:9, :]
+# repeated_matrix = np.tile(fixed_matrix[:, :, np.newaxis], (1, 1, 1000))
+# repeated_matrix[:3, 3, :] = poses[6:9, :]
+repeated_matrix = T_r_mat
 data['siminR'].signals.values = repeated_matrix
 data['siminR'].signals.dimensions = [4, 4]
 
