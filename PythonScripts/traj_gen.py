@@ -4,6 +4,7 @@ import sys
 sys.path.append('./walking_packet')
 from thmos_walk_engine_pos import *
 from random import random 
+import scipy.io
 from scipy.spatial.transform import Rotation as R
 
 def RPYtoR(rpy):
@@ -65,24 +66,40 @@ if __name__ == '__main__':
   nk = 0
   roll_ang = 0
   pitch_ang = 0
-  size_log = 1000
+  size_log = 1000 + 1000
 
   pos_mat = np.zeros((size_log,12))
   T_l_mat = np.zeros((4,4,size_log))
   T_r_mat = np.zeros((4,4,size_log))
   time_mat = np.zeros((size_log,1))
+ 
+  for j in range(500):
+    joint_pos = [Params["ex_foot_width"], 0, - 0.5 + j / 1000 * (-Params["trunk_height"] + 0.5),
+                 0,0,0,
+                 - Params["ex_foot_width"],  0, - 0.5 + j / 1000 * (-Params["trunk_height"] + 0.5),
+                 0,0,0]
+    pos_mat[step_num,:] = joint_pos
+    T_l_mat[:3,:3,step_num] = RPYtoR(joint_pos[3:6])
+    T_l_mat[:3, 3,step_num] = joint_pos[0:3]
+    T_l_mat[ 3, 3,step_num] = 1
+    T_r_mat[:3,:3,step_num] = RPYtoR(joint_pos[9:12])
+    T_r_mat[:3, 3,step_num] = joint_pos[6:9]
+    T_r_mat[ 3, 3,step_num] = 1   
+    time_mat[step_num] = step_num * Params["dt"]
+    #print(joint_pos)
+    step_num += 1
 
   while step_num < size_log:
     #else:
     if n == 0:
       if nk < 8:
-        walk.setGoalVel([(random()-0.5)*0.3 * 0 + 0.15, (random()-0.5)*0.3 * 0 + 0.0, (random()-0.5)*0.2 * 0 + 0.2])
+        walk.setGoalVel([0.05, 0.0, 0.0])
         nk = nk + 1
       elif nk < 12:
-        walk.setGoalVel([(random()-0.5)*0.3 * 0 + 0.15, (random()-0.5)*0.3 * 0 + 0.0, (random()-0.5)*0.2 * 0 + 0.2])
+        walk.setGoalVel([0.05, 0.0, 0.0])
         nk = nk + 1
       else:
-        walk.setGoalVel([(random()-0.5)*0.3 * 0 + 0.15, (random()-0.5)*0.3 * 0 + 0.0, (random()-0.5)*0.2 * 0 + 0.2])
+        walk.setGoalVel([0.05, 0.0, 0.0])
         nk = 0
     joint_pos,n = walk.getNextPos()
     pos_mat[step_num,:] = joint_pos
@@ -95,7 +112,45 @@ if __name__ == '__main__':
     time_mat[step_num] = step_num * Params["dt"]
     #print(joint_pos)
     step_num += 1
-  print(T_l_mat)
+  print(T_l_mat[:,:,0])
   #print(time_mat)
   np.savez('data.npz', time=time_mat, pos=pos_mat, lposT = T_l_mat, rposT = T_r_mat)
+
+
+# 加载.mat文件
+data = scipy.io.loadmat('defaultsimulationinputs.mat', struct_as_record=False, squeeze_me=True)
+
+# 获取 siminR 和 siminL
+siminR = data['siminR']
+siminL = data['siminL']
+
+# 访问 siminR 的 time 和 signals 字段
+siminR_time = siminR.time
+siminR_signals = siminR.signals
+
+# 访问 signals 的 values 和 dimensions
+siminR_values = siminR_signals.values
+siminR_dimensions = siminR_signals.dimensions
+
+# 打印输出以验证数据
+print('Time:', siminR_time)
+print('Time Shape:', siminR_time.shape)
+print('Signals Values Shape:', siminR_values.shape)
+print('Signals Dimensions:', siminR_dimensions)
+
+print(siminR_values[:, :, 0])
+
+# ----------------------------------------------------------------------
+data['siminR'].time = time_mat
+data['siminL'].time = time_mat
+
+data['siminL'].signals.values = T_l_mat
+data['siminL'].signals.dimensions = [4., 4.]
+
+data['siminR'].signals.values = T_r_mat
+data['siminR'].signals.dimensions = [4., 4.]
+
+
+print(data['siminR'].signals.values.shape)
+scipy.io.savemat('modifiedsimulationinputs.mat', data)
 
