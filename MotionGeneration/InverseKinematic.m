@@ -1,5 +1,6 @@
 %% parameters
-animateOn = true;     % rander the image and show in figure
+% animateOn = true;     % rander the image and show in figure
+animateOn = false;
 speedupfactor = 30;   % animation speed up 
 
 % load default parameters if previous script wasn't run
@@ -10,8 +11,8 @@ end
 % NOTE: make sure parameters match in inverse kinematics function 
 L1 = 0.12; 
 L2 = 0; 
-L3 = 0.4;
-L4 = 0.38;
+L3 = upper_leg_length;
+L4 = lower_leg_length;
 L5 = 0;
 
 %% create rigidBodyTree
@@ -76,61 +77,71 @@ qright0 = zeros(1,6);
 qleft0 = zeros(1,6); 
 % ShowRobotJoints(robot, qright0, qleft0)
 
+% 生成轨迹第一帧纵坐标-0.78, 这个长度应该等于两节腿长之和
+% 所以在修改腿长之后应该修改步态轨迹 z 坐标值
+MaxZ = -0.78 + L3 + L4;
 
-% n = [0;  0; -1]; % x
-% s = [-1; 0; 0];  % y
-% a = [0;  1; 0];  % z
-% R = [n s a];   
-% for sIdx = 1:length(footinfos)
-%     % Extract X Y Z position states (indices 1, 3, and 5)
-%     stateL = footinfos{sIdx}.footleft([1 3 5],:); 
-%     stateR = footinfos{sIdx}.footright([1 3 5],:); 
-% 
-%     % Initialize matrices
-%     numIdx = size(stateL,2); 
-%     jointsLeft = zeros(6,numIdx); 
-%     jointsRight = zeros(6,numIdx); 
-%     transMatLeft = zeros(4,4,numIdx); 
-%     transMatRight = zeros(4,4,numIdx); 
-% 
-%     % Skip some intermediate steps when visualizing 
-%     for idx = 1:numIdx
-%         % Get Left joints
-%         p = stateL(:,idx); 
-%         transmat =  [R     p; 
-%                     [0 0 0 1]];
-%         isLeft = true; 
-%         qLeft = invKinBody2Foot(transmat, isLeft); % Call IK function
-%         jointsLeft(:,idx) = qLeft; 
-%         transMatLeft(:,:,idx) = transmat; 
-% 
-%         % Get Right joints
-%         p = stateR(:,idx); 
-%         transmat =  [R     p; 
-%                     [0 0 0 1]];
-%         isLeft = false; 
-%         qRight = invKinBody2Foot(transmat, isLeft);
-%         jointsRight(:,idx) = qRight; 
-%         transMatRight(:,:,idx) = transmat; 
-% 
-%         % Animate
-%         if animateOn
-%             if rem(idx,speedupfactor) == 0
-% 
-%                 ShowRobotJoints(robot, qRight, qLeft);
-%             end 
-%         end
-%     end
-%     % save joints info 
-%     footinfos{sIdx}.jointsleft = jointsLeft; 
-%     footinfos{sIdx}.jointsright = jointsRight; 
-%     footinfos{sIdx}.transmatleft = transMatLeft; 
-%     footinfos{sIdx}.transmatright = transMatRight; 
-% end
+n = [0;  0; -1]; % x
+s = [-1; 0; 0];  % y
+a = [0;  1; 0];  % z
+R = [n s a];   
+for sIdx = 1:length(footinfos)
+    % Extract X Y Z position states (indices 1, 3, and 5)
+    stateL = footinfos{sIdx}.footleft([1 3 5],:); 
+    stateR = footinfos{sIdx}.footright([1 3 5],:); 
 
+    % 更新 stateL 和 stateR 的第三行（原始的第5行）
+    stateL(3,:) = stateL(3,:) - MaxZ;
+    stateR(3,:) = stateR(3,:) - MaxZ;
+    % Initialize matrices
+    numIdx = size(stateL,2); 
+    jointsLeft = zeros(6,numIdx); 
+    jointsRight = zeros(6,numIdx); 
+    transMatLeft = zeros(4,4,numIdx); 
+    transMatRight = zeros(4,4,numIdx); 
+
+    % Skip some intermediate steps when visualizing 
+    for idx = 1:numIdx
+        % Get Left joints
+        p = stateL(:,idx); 
+        transmat =  [R     p; 
+                    [0 0 0 1]];
+        isLeft = true; 
+        qLeft = invKinBody2Foot(transmat, isLeft); % Call IK function
+        jointsLeft(:,idx) = qLeft; 
+        transMatLeft(:,:,idx) = transmat; 
+
+        % Get Right joints
+        p = stateR(:,idx); 
+        transmat =  [R     p; 
+                    [0 0 0 1]];
+        isLeft = false; 
+        qRight = invKinBody2Foot(transmat, isLeft);
+        jointsRight(:,idx) = qRight; 
+        transMatRight(:,:,idx) = transmat; 
+
+        % Animate
+        if animateOn
+            if rem(idx,speedupfactor) == 0
+
+                ShowRobotJoints(robot, qRight, qLeft);
+            end 
+        end
+    end
+    % save joints info 
+    footinfos{sIdx}.jointsleft = jointsLeft; 
+    footinfos{sIdx}.jointsright = jointsRight; 
+    footinfos{sIdx}.transmatleft = transMatLeft; 
+    footinfos{sIdx}.transmatright = transMatRight; 
+end
+
+
+disp('Generate foot trajectory to footinfos');
 % last update of Animation in case Animation is off 
-% ShowRobotJoints(robot, qRight, qLeft);
+ShowRobotJoints(robot, qRight, qLeft);
 
+
+% 显示参数
 qright0 = zeros(1,6); 
 qleft0 = zeros(1,6); 
 config = GetConfiguration(robot, qright0, qleft0);
@@ -139,39 +150,51 @@ disp(pose_link1);
 pose_link1 = getTransform(robot, config, 'leftleg7', 'base');
 
 % 显示变换矩阵
-disp(pose_link1);
-
-error('test')
+% disp(pose_link1);
 
 
 
+%% Generate foot trajectory
+% 这节代码会修改工作区里的变量：siminL, siminR, 
+% 但是不会修改defaultsimulationinputs.mat里面的内容
+% 生成的数据基于footinfos{1}.transmatleft, 这个变量会在上一节中修改
+timeVec = footinfos{1}.timevec; 
+transMatLeft = footinfos{1}.transmatleft; 
+transMatRight = footinfos{1}.transmatright; 
+
+siminL.time = timeVec;
+siminL.signals.values = transMatLeft;
+siminL.signals.dimensions = [4,4];
+
+siminR.time = timeVec;
+siminR.signals.values = transMatRight;
+siminR.signals.dimensions = [4,4];
+
+for idx = 2:length(footinfos)
+    timeVec = footinfos{idx}.timevec;
+
+    transMatLeft = footinfos{idx}.transmatleft; 
+    transMatRight = footinfos{idx}.transmatright; 
+
+    siminL.time = [siminL.time timeVec];
+    siminL.signals.values = cat(3,siminL.signals.values, transMatLeft);
+
+    siminR.time = [siminR.time timeVec];
+    siminR.signals.values = cat(3,siminR.signals.values, transMatRight);
+end
 
 
-% timeVec = footinfos{1}.timevec; 
-% transMatLeft = footinfos{1}.transmatleft; 
-% transMatRight = footinfos{1}.transmatright; 
+
+% for k = 1:20
+%     % 提取第k个 4x4 矩阵
+%     currentMatrix = siminR.signals.values(:,:,k);
 % 
-% siminL.time = timeVec;
-% siminL.signals.values = transMatLeft;
-% siminL.signals.dimensions = [4,4];
-% 
-% siminR.time = timeVec;
-% siminR.signals.values = transMatRight;
-% siminR.signals.dimensions = [4,4];
-% 
-% for idx = 2:length(footinfos)
-%     timeVec = footinfos{idx}.timevec;
-% 
-%     transMatLeft = footinfos{idx}.transmatleft; 
-%     transMatRight = footinfos{idx}.transmatright; 
-% 
-%     siminL.time = [siminL.time timeVec];
-%     siminL.signals.values = cat(3,siminL.signals.values, transMatLeft);
-% 
-%     siminR.time = [siminR.time timeVec];
-%     siminR.signals.values = cat(3,siminR.signals.values, transMatRight);
+%     % 显示当前矩阵
+%     disp(['Matrix number ', num2str(k), ':']);
+%     disp(currentMatrix);
 % end
 
+disp('Generate foot trajectory to siminL and siminR');
 
 
 
@@ -211,21 +234,6 @@ function ShowRobotJoints(robot, anglesright, anglesleft)
     title('Walking Pattern Inverse Kinematics')
     pause(0.001)
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
