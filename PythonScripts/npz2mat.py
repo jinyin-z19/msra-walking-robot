@@ -3,7 +3,6 @@ import numpy as np
 
 # 加载.mat文件
 data = scipy.io.loadmat('defaultsimulationinputs.mat', struct_as_record=False, squeeze_me=True)
-# data = scipy.io.loadmat('modifiedsimulationinputs.mat', struct_as_record=False, squeeze_me=True)
 
 # 获取 siminR 和 siminL
 siminR = data['siminR']
@@ -44,17 +43,21 @@ T_r_mat = new_data['rposT']
 # repeated_matrix = np.tile(fixed_matrix[:, :, np.newaxis], (1, 1, 1000))
 # repeated_matrix[:3, 3, :] = poses[:3, :]
 repeated_matrix = T_l_mat
+repeated_matrix[0, 3, :] -= 0.12
 data['siminL'].signals.values = repeated_matrix
-data['siminL'].signals.dimensions = [4, 4]
+data['siminL'].signals.dimensions = [4., 4.]
 
 
 # repeated_matrix = np.tile(fixed_matrix[:, :, np.newaxis], (1, 1, 1000))
 # repeated_matrix[:3, 3, :] = poses[6:9, :]
 repeated_matrix = T_r_mat
+repeated_matrix[0, 3, :] += 0.12
 data['siminR'].signals.values = repeated_matrix
-data['siminR'].signals.dimensions = [4, 4]
+data['siminR'].signals.dimensions = [4., 4.]
 
 
 print(data['siminR'].signals.values.shape)
+for i in range(1000):
+    print(data['siminR'].signals.values[:, :, i])
 
 scipy.io.savemat('modifiedsimulationinputs.mat', data)
